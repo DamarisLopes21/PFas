@@ -6,7 +6,7 @@ def insert_user(nome, senha):
         host='localhost',
         database='nome',
         user='root',
-        password='DAMARIS21$'
+        password=''
     )
 
     cursor = conn.cursor()
