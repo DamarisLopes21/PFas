@@ -4,9 +4,9 @@ import mysql.connector
 def insert_user(nome, senha):
     conn = mysql.connector.connect(
         host='localhost',
-        database='nome',
+        database='SCNFAS',
         user='root',
-        password=''
+        password='DAMARIS21$'
     )
 
     cursor = conn.cursor()
@@ -20,6 +20,7 @@ def insert_user(nome, senha):
 # Configuração da página de cadastro
 
 st.title("Página de Cadastro")
+
 
 nome = st.text_input("Nome")
 senha = st.text_input("Senha", type="password")
