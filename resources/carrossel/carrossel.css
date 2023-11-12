@@ -5,6 +5,10 @@ body {
     background-color: #f4f4f4;
 }
 
+body::-webkit-scrollbar {
+    display: none;
+}
+
 #movie-carousel-container {
     size: 80%;
     margin: 20px auto;

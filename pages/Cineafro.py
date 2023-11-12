@@ -13,5 +13,6 @@ with open('resources/carrossel/carrossel.js', "r") as file:
 # Exiba o conteúdo HTML no Streamlit
 st.components.v1.html(
     html_content + f"<style>{css_content}</style><script>{js_content}</script>",
-    scrolling=True
+    scrolling=True,
+    height=800
 )
