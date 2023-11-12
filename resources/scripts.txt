@@ -1,4 +1,0 @@
-pip install streamlit
-pip install streamlit_carousel
-pip install mysql
-pip install bcrypt

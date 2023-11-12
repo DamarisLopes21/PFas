@@ -1,3 +1,6 @@
+CREATE DATABASE site_consciencia_negra;
+USE site_consciencia_negra;
+
 CREATE TABLE users(
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	name VARCHAR(100) UNIQUE,
@@ -10,7 +13,7 @@ CREATE TABLE coments(
 	type_id INT NOT NULL,
 	type VARCHAR(20) NOT NULL,
 	text TEXT NOT NULL,
-	date DATE,
+	date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id),
 	CONSTRAINT check_type CHECK (type IN ('photos', 'films')),
     UNIQUE (id, type, type_id)
@@ -18,6 +21,7 @@ CREATE TABLE coments(
 
 CREATE TABLE films(
 	id INT PRIMARY KEY AUTO_INCREMENT,
+	image_url text not null,
 	title VARCHAR(100) UNIQUE NOT NULL,
 	sinopse TEXT,
 	date DATE,
