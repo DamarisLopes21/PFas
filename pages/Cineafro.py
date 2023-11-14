@@ -1,13 +1,13 @@
 import streamlit as st
 
 # Leia o conteúdo do arquivo HTML
-with open('resources/carrossel/carrossel.html', "r") as file:
+with open('resources/carrossel/carrossel.html', "r", encoding='utf-8') as file:
     html_content = file.read()
 
-with open('resources/carrossel/carrossel.css', "r") as file:
+with open('resources/carrossel/carrossel.css', "r", encoding='utf-8') as file:
     css_content = file.read()
 
-with open('resources/carrossel/carrossel.js', "r") as file:
+with open('resources/carrossel/carrossel.js', "r", encoding='utf-8') as file:
     js_content = file.read()
 
 # Exiba o conteúdo HTML no Streamlit
