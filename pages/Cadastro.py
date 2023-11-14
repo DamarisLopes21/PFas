@@ -1,29 +1,17 @@
 import streamlit as st
-import mysql.connector
-import bcrypt
+import requests
 
 def insert_user(name, password):
-    # Gera um salt aleatório
-    salt = bcrypt.gensalt()
-    
-    # Gera o hash da senha utilizando o salt
-    hashed_senha = bcrypt.hashpw(password.encode('utf-8'), salt)
 
-    conn = mysql.connector.connect(
-        host='localhost',
-        database='site_consciencia_negra',
-        user='root',
-        password='root'
-    )
+    api_url = 'http://localhost:5000/auth/register'
 
-    cursor = conn.cursor()
-    query = "INSERT INTO users (name, password, salt) VALUES (%s, %s)"
-    cursor.execute(query, (name, hashed_senha))
-    
-    conn.commit()
+    data_to_send = {'name': name, 'password': password}
 
-    cursor.close()
-    conn.close()
+    response = requests.post(api_url, data=data_to_send)
+
+    message = response.json().get('message')
+
+    return response.status_code == 200, message
 
 # Configuração da página de cadastro
 
@@ -33,5 +21,8 @@ nome = st.text_input("Nome")
 senha = st.text_input("Senha", type="password")
 
 if st.button("Cadastrar"):
-    insert_user(nome, senha)
-    st.success("Cadastro realizado com sucesso!")
+    sucess, message = insert_user(nome, senha)
+    if sucess:
+        st.success(message)
+    else:
+        st.error(message)

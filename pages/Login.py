@@ -1,31 +1,14 @@
 import streamlit as st
-import mysql.connector
-import bcrypt
-
+import requests
 def login(name, password):
-    conn = mysql.connector.connect(
-        host='localhost',
-        database='site_consciencia_negra',
-        user='root',
-        password='root'
-    )
 
-    cursor = conn.cursor()
-    query = "SELECT * FROM users WHERE name = %s"
-    cursor.execute(query, (name,))
-    
-    user = cursor.fetchone()
-        
-    cursor.close()
-    conn.close()
-    
-    if user:
-        stored_hashed_password = user[2]  # Índice correspondente à coluna 'password' na tabela
-        
-        # Verifica se as senhas coincidem
-        return bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8'))
-        
-    return False
+    api_url = 'http://localhost:5000/auth/login'
+
+    data_to_send = {'name': name, 'password': password}
+
+    response = requests.post(api_url, data=data_to_send)
+
+    return response.status_code == 200
 
 # Configuração da página de login
 st.title("Página de Login")
