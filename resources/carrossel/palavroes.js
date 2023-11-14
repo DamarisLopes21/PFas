@@ -1,4 +1,4 @@
-Vadia
+export default palavrasOfensivas = `Vadia
 Safada
 Vagabunda
 Pobre
@@ -928,4 +928,4 @@ Cuzona
 Cú
 Cu
 pica
-piquinhas
+piquinhas`.trim().split('\n')

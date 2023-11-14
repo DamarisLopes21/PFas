@@ -1,6 +1,6 @@
 let moviesData = [];
 let commentsData = [];
-let palavrasOfensivas;
+import palavrasOfensivas from "./palavroes";
 let currentMovieIndex = 0;
 
 const apiUrl = 'http://localhost:5000';
@@ -18,33 +18,14 @@ async function fetchMoviesData() {
 fetchMoviesData().then(movieData => {
     // Crie os cartões do carrossel
     const movieCarousel = document.getElementById('movie-carousel');
-    const numMovies = movieData.movies.length;
 
     // Clone as primeiras e últimas imagens para criar o efeito circular
     movieData.movies.forEach((movie, index) => {
-        // if (index === 0) {
-        //     // Clone as últimas imagens no início do carrossel
-        //     const cloneCard = document.createElement('div');
-        //     cloneCard.className = 'movie-card';
-        //     cloneCard.innerHTML = `<img src="${movieData.movies[numMovies - 1].image_url}" alt="${movieData.movies[numMovies - 1].title}">`;
-        //     cloneCard.addEventListener('click', () => showMovie(numMovies + index));
-        //     movieCarousel.appendChild(cloneCard);
-        // }
-
         const movieCard = document.createElement('div');
         movieCard.className = 'movie-card';
         movieCard.innerHTML = `<img src="${movie.image_url}" alt="${movie.title}">`;
         movieCard.addEventListener('click', () => showMovie(index));
         movieCarousel.appendChild(movieCard);
-
-        // if (index === numMovies - 1) {
-        //     // Clone as primeiras imagens no final do carrossel
-        //     const cloneCard = document.createElement('div');
-        //     cloneCard.className = 'movie-card';
-        //     cloneCard.innerHTML = `<img src="${movieData.movies[0].image_url}" alt="${movieData.movies[0].title}">`;
-        //     cloneCard.addEventListener('click', () => showMovie(index - numMovies));
-        //     movieCarousel.appendChild(cloneCard);
-        // }
     });
 
     // Mostre os detalhes e os comentários para o primeiro filme
@@ -124,6 +105,7 @@ async function getPalavrasOfensivas() {
     try {
         // Substitua a URL abaixo pela localização real do seu arquivo de palavras ofensivas
         const response = await fetch('/resources/palavroes.txt');
+        console.log(response);
         
         if (!response.ok) {
             throw new Error('Falha ao obter palavras ofensivas.');
@@ -152,7 +134,6 @@ function verificaComentario(comentario) {
     }
     return true;
 }
-
 
 function removeNumerosComoLetras(texto) {
     // Mapeamento de números para letras
