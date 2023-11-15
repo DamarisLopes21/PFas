@@ -110,6 +110,7 @@ async function addComment() {
         const newComment = document.createElement('li');
         newComment.textContent = commentText;
         commentsList.appendChild(newComment);
+        commentInput.value = '';
 
         try {
             // Enviar o comentário para a API
@@ -135,7 +136,6 @@ async function addComment() {
                     text: commentText,
                 });
 
-                commentInput.value = '';
             } else {
                 // Lidar com erro ao enviar comentário
                 console.error('Erro ao enviar comentário:', response.status, response.statusText);
