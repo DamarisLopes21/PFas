@@ -122,20 +122,14 @@ body::-webkit-scrollbar {
     cursor: pointer;
 }
 
+#movie-details {
+    padding: 10px;
+}
+
 #add-comment-btn:hover {
     background-color: #45a049;
 }
 
-@media (max-width: 768px) {
-    #movie-carousel-container {
-        width: 100%;
-    }
-
-    #movie-details {
-        padding: 10px;
-    }
-
-    #comments-container {
-        width: 100%;
-    }
+#movie-carousel-container {
+    width: 100%;
 }

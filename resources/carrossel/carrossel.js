@@ -149,8 +149,6 @@ async function addComment() {
     }
 }
 
-
-// Simula a leitura de palavras ofensivas de um arquivo
 async function getPalavrasOfensivas() {
     try {
         palavras = `Vadia
