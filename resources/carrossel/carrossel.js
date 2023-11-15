@@ -2,35 +2,58 @@ let moviesData = [];
 let commentsData = [];
 let palavrasOfensivas;
 let currentMovieIndex = 0;
-const apiUrl = 'http://localhost:5000';
+const apiUrl = 'http://localhost:5000/api';
 
 async function fetchMoviesData() {
-    const response = await fetch(`${apiUrl}/api/movies`);
-    const data = await response.json();
-    console.log(data);
-    moviesData = data.movies;
-    commentsData = data.comments;
-    
-    return data;
+    try {
+        const moviesResponse = await fetch(`${apiUrl}/movies`);
+        if (!moviesResponse.ok) {
+            throw new Error(`Erro ao buscar dados dos filmes`);
+        }
+
+        const moviesFetchData = await moviesResponse.json();
+        moviesData = moviesFetchData.movies;
+
+        const commentsResponse = await fetch(`${apiUrl}/comments/type/movies`);
+        const commentsFetchData = await commentsResponse.json();
+        commentsData = commentsFetchData.comments;
+        
+    } catch (moviesError) {
+        // Lidar com erros aqui
+        console.error(error);
+        throw error; // Rejeitar a promessa para que o bloco catch posterior seja acionado
+    }
 }
 
 // Inicialmente, obtenha todos os dados dos filmes
-fetchMoviesData().then(movieData => {
+fetchMoviesData().then(() => {
     // Crie os cartões do carrossel
-    const movieCarousel = document.getElementById('movie-carousel');
+    if (moviesData) {
+        const movieCarousel = document.getElementById('movie-carousel');
+        moviesData.forEach((movie, index) => {
+            const movieCard = document.createElement('div');
+            movieCard.className = 'movie-card';
+            movieCard.innerHTML = `<img src="${movie.image_url}" alt="${movie.title}">`;
+            movieCard.addEventListener('click', () => showMovie(index));
+            movieCarousel.appendChild(movieCard);
+        });
 
-    // Clone as primeiras e últimas imagens para criar o efeito circular
-    movieData.movies.forEach((movie, index) => {
-        const movieCard = document.createElement('div');
-        movieCard.className = 'movie-card';
-        movieCard.innerHTML = `<img src="${movie.image_url}" alt="${movie.title}">`;
-        movieCard.addEventListener('click', () => showMovie(index));
-        movieCarousel.appendChild(movieCard);
-    });
-
-    // Mostre os detalhes e os comentários para o primeiro filme
-    showMovie(0);
+        showMovie(0);
+    }
+    else {
+        showNoMovies();
+    }
+}).catch((error) => {
+    showNoMovies();
 });
+
+function showNoMovies() {
+    const container = document.getElementById('container');
+    container.innerHTML = '';
+    const messageElement = document.createElement('h1');
+    messageElement.textContent = 'Não há filmes disponíveis no momento';
+    container.appendChild(messageElement);
+}
 
 function showMovie(index) {
     currentMovieIndex = index;
@@ -78,27 +101,54 @@ function prevMovie() {
     showMovie((currentMovieIndex > 0) ? currentMovieIndex - 1 : moviesData.length - 1);
 }
 
-function addComment() {
+async function addComment() {
     const commentInput = document.getElementById('comment-input');
     const commentText = commentInput.value;
 
     if (commentText.trim() !== '' && verificaComentario(commentText)) {
-
         const commentsList = document.getElementById('comments-list');
         const newComment = document.createElement('li');
         newComment.textContent = commentText;
         commentsList.appendChild(newComment);
 
-        commentsData.push({
-            type: 'movies',
-            type_id: moviesData[currentMovieIndex]['id'],
-            date: Date.now,
-            text: commentText
-        });
+        try {
+            // Enviar o comentário para a API
+            const response = await fetch(`${apiUrl}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: 1,
+                    type_id: moviesData[currentMovieIndex]['id'],
+                    type: 'movies',
+                    text: commentText,
+                    date: new Date().toISOString().slice(0, 19).replace("T", " ")
+                }),
+            });
 
-        commentInput.value = '';
+            if (response.ok) {
+                // Comentário enviado com sucesso
+                commentsData.push({
+                    type: 'movies',
+                    type_id: moviesData[currentMovieIndex]['id'],
+                    text: commentText,
+                });
+
+                commentInput.value = '';
+            } else {
+                // Lidar com erro ao enviar comentário
+                console.error('Erro ao enviar comentário:', response.status, response.statusText);
+                newComment.textContent = 'Comentário não pôde ser adicionado';
+            }
+        } catch (error) {
+            // Lidar com exceções
+            console.error('Erro ao enviar comentário:', error);
+            newComment.textContent = 'Comentário não pôde ser adicionado';
+        }  
     }
 }
+
 
 // Simula a leitura de palavras ofensivas de um arquivo
 async function getPalavrasOfensivas() {
