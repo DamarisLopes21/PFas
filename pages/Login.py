@@ -3,7 +3,7 @@ import requests
 def login(name, password):
 
     api_url = 'http://localhost:5000/auth/login'
-
+    
     data_to_send = {'name': name, 'password': password}
 
     response = requests.post(api_url, data=data_to_send)
