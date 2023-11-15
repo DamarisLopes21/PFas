@@ -1,5 +1,4 @@
 import streamlit as st
-from PIL import Image
 
 st.title("Semana da Consciência Negra IFRO")
 
