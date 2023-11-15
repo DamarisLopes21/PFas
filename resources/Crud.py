@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Time, Date, ForeignKey, CheckConstraint
@@ -102,16 +102,16 @@ def register():
             cursor.execute(query, (name,))
             existing_user = cursor.fetchone()
             if existing_user:
-                return jsonify({"message": "Nome de usuário já cadastrado"}), 409
+                return make_response(jsonify({"message": "Nome de usuário já cadastrado"}), 409)
 
             query = "INSERT INTO users (name, password, salt) VALUES (%s, %s, %s)"
             cursor.execute(query, (name, hashed_senha, salt))
             conn.commit()
 
-        return jsonify({"message": "Cadastro bem-sucedido"})
+        return make_response(jsonify({"message": "Cadastro bem-sucedido"}), 200)
 
     except mysql.connector.Error as e:
-        return jsonify({"message": "Cadastro mal-sucedido"}), 500
+        return make_response(jsonify({"message": "Cadastro mal-sucedido"}), 500)
 
 # Login
 @app.route('/auth/login', methods=['POST'])
@@ -131,15 +131,26 @@ def login():
             # Verifica se as senhas coincidem
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
                 # Login bem-sucedido
-                return jsonify({"message": "Login bem-sucedido"})
+                return make_response(jsonify({"message": "Login bem-sucedido"}), 200)
 
         # Login falhou
-        return jsonify({"message": "Nome de usuário ou senha incorretos"}), 401
+        return make_response(jsonify({"message": "Nome de usuário ou senha incorretos"}), 401)
 
     except mysql.connector.Error as e:
-        return jsonify({"message": f"Erro ao processar login"}), 500
+        return make_response(jsonify({"message": f"Erro ao processar login"}), 500)
 
-# Movies #
+
+# Serization #
+
+def serialize_comment(comment):
+    return {
+        'id': comment.id,
+        'user_id': comment.user_id,
+        'type_id': comment.type_id,
+        'type': comment.type,
+        'text': comment.text,
+        'date': comment.date.strftime('%d-%m-%Y %H:%M:%S'),  # Formato de data e hora desejado
+    }
 
 def serialize_event(event):
     return {
@@ -161,6 +172,8 @@ def serialize_movie(movie):
         'classification': movie.classification
     }
 
+# Movies #
+
 # Index
 @app.route('/api/movies', methods=['GET'])
 def get_movies():
@@ -170,10 +183,10 @@ def get_movies():
         # Converter datetime e timedelta para strings antes de enviar a resposta
         serialized_movies = [serialize_movie(movie) for movie in movies]
 
-        return jsonify({'movies': serialized_movies})
+        return make_response(jsonify({'movies': serialized_movies}), 200)
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter filmes"}), 500
+        return make_response(jsonify({"message": "Erro ao obter filmes"}), 500)
 
 # Create
 @app.route('/api/movies', methods=['POST'])
@@ -193,10 +206,10 @@ def add_movie():
         db.session.add(new_movie)
         db.session.commit()
 
-        return jsonify({'message': 'Filme adicionado com sucesso', 'movie': serialize_movie(new_movie)}), 201
+        return make_response(jsonify({'message': 'Filme adicionado com sucesso', 'movie': serialize_movie(new_movie)}), 201)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao adicionar filme'}), 500
+        return make_response(jsonify({'message': 'Erro ao adicionar filme'}), 500)
 
 #Get By Id
 @app.route('/api/movies/<int:movie_id>', methods=['GET'])
@@ -205,12 +218,12 @@ def get_movie(movie_id):
         movie = Movie.query.get(movie_id)
 
         if movie:
-            return jsonify({'movie': serialize_movie(movie)})
+            return make_response(jsonify({'movie': serialize_movie(movie)}), 200)
 
-        return jsonify({'message': 'Filme não encontrado'}), 404
+        return make_response(jsonify({'message': 'Filme não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao obter filme'}), 500
+        return make_response(jsonify({'message': 'Erro ao obter filme'}), 500)
 
 # Get By Name
 @app.route('/api/movies/name/<string:movie_name>', methods=['GET'])
@@ -219,12 +232,12 @@ def get_movie_by_name(movie_name):
         movie = Movie.query.filter_by(title=movie_name).first()
 
         if movie:
-            return jsonify({'movie': serialize_movie(movie)})
+            return make_response(jsonify({'movie': serialize_movie(movie)}), 200)
 
-        return jsonify({'message': 'Filme não encontrado'}), 404
+        return make_response(jsonify({'message': 'Filme não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao obter filme'}), 500
+        return make_response(jsonify({'message': 'Erro ao obter filme'}), 500)
 
 # Update By Id
 @app.route('/api/movies/<int:movie_id>', methods=['PUT'])
@@ -243,12 +256,12 @@ def update_movie(movie_id):
 
             db.session.commit()
 
-            return jsonify({'message': 'Filme atualizado com sucesso', 'movie': serialize_movie(movie)}), 200
+            return make_response(jsonify({'message': 'Filme atualizado com sucesso', 'movie': serialize_movie(movie)}), 200)
 
-        return jsonify({'message': 'Filme não encontrado'}), 404
+        return make_response(jsonify({'message': 'Filme não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao atualizar filme'}), 500
+        return make_response(jsonify({'message': 'Erro ao atualizar filme'}), 500)
 
 # Delete By Id
 @app.route('/api/movies/<int:movie_id>', methods=['DELETE'])
@@ -260,12 +273,12 @@ def delete_movie_by_id(movie_id):
             db.session.delete(movie)
             db.session.commit()
 
-            return jsonify({'message': 'Filme deletado com sucesso'}), 200
+            return make_response(jsonify({'message': 'Filme deletado com sucesso'}), 200)
 
-        return jsonify({'message': 'Filme não encontrado'}), 404
+        return make_response(jsonify({'message': 'Filme não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar filme'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar filme'}), 500)
 
 # Delete By Date
 @app.route('/api/movies/<string:movie_date>', methods=['DELETE'])
@@ -278,12 +291,12 @@ def delete_movie_by_date(movie_date):
                 db.session.delete(movie)
             db.session.commit()
 
-            return jsonify({'message': 'Filmes deletados com sucesso'}), 200
+            return make_response(jsonify({'message': 'Filmes deletados com sucesso'}), 200)
 
-        return jsonify({'message': 'Filmes não encontrados'}), 404
+        return make_response(jsonify({'message': 'Filmes não encontrados'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar filme'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar filme'}), 500)
 
 # Comments #
 
@@ -292,10 +305,11 @@ def delete_movie_by_date(movie_date):
 def get_comments():
     try:
         comments = Comment.query.all()
-        return jsonify({'comments': [comment.__dict__ for comment in comments]})
+        comments = [serialize_comment(comment) for comment in comments]
+        return make_response(jsonify({'comments': [comment for comment in comments]}), 200)
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter comentários"}), 500
+        return make_response(jsonify({"message": "Erro ao obter comentários"}), 500)
 
 # Create
 @app.route('/api/comments', methods=['POST'])
@@ -312,10 +326,11 @@ def add_comment():
         db.session.add(new_comment)
         db.session.commit()
 
-        return jsonify({'message': 'Comentário adicionado com sucesso', 'comment': new_comment.__dict__}), 201
+        new_comment = serialize_comment(new_comment)
+        return make_response(jsonify({'message': 'Comentário adicionado com sucesso', 'comment': new_comment}), 201)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao adicionar comentário'}), 500
+        return make_response(jsonify({'message': 'Erro ao adicionar comentário', 'error': e}), 500)
 
 # Get By User_Id
 @app.route('/api/comments/<int:user_id>', methods=['GET'])
@@ -324,44 +339,53 @@ def get_comments_by_user_id(user_id):
         user = User.query.get(user_id)
         if user:
             comments = user.comments
-            return jsonify({'comments': [comment.__dict__ for comment in comments]})
-        return jsonify({'message': 'Comentários não encontrados'}), 404
+            comments = [serialize_comment(comment) for comment in comments]
+            return make_response(jsonify({'comments': [comment for comment in comments]}), 200)
+        return make_response(jsonify({'message': 'Comentários não encontrados'}), 404)
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter comentários"}), 500
+        return make_response(jsonify({"message": "Erro ao obter comentários"}), 500)
 
 # Get By User_Name
-@app.route('/api/comments/<string:user_name>', methods=['GET'])
+@app.route('/api/comments/user/<string:user_name>', methods=['GET'])
 def get_comments_by_user_name(user_name):
     try:
         user = User.query.filter_by(name=user_name).first()
         if user:
             comments = user.comments
-            return jsonify({'comments': [comment.__dict__ for comment in comments]})
-        return jsonify({'message': 'Comentários não encontrados'}), 404
+            comments = [serialize_comment(comment) for comment in comments]
+            return make_response(jsonify({'comments': [comment for comment in comments]}), 200)
+        return make_response(jsonify({'message': 'Comentários não encontrados'}), 404)
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter comentários"}), 500
+        return make_response(jsonify({"message": "Erro ao obter comentários"}), 500)
+
+# Get By Type
+@app.route('/api/comments/type/<string:type>', methods=['GET'])
+def get_comments_by_type(type):
+    if type not in ('photos', 'movies', 'events'):
+        return make_response(jsonify({'message': 'Tipo de comentário inválido'}), 400)
+    try:
+        comments = Comment.query.filter_by(type=type).all()
+        comments = [serialize_comment(comment) for comment in comments]
+        if comments:
+            return make_response(jsonify({'comments': comments}), 200)
+        else:
+            return make_response(jsonify({'message': 'Comentários não encontrados'}), 404)
+
+    except Exception as e:
+        return make_response(jsonify({"message": "Erro ao obter comentários"}), 500)
 
 # Get By Type_Id
 @app.route('/api/comments/<string:type>/<int:type_id>', methods=['GET'])
 def get_comments_by_type_id(type, type_id):
     try:
         comments = Comment.query.filter_by(type=type, type_id=type_id).all()
-        return jsonify({'comments': [comment.__dict__ for comment in comments]}) if comments else jsonify({'message': 'Comentários não encontrados'}), 404
+        comments = [serialize_comment(comment) for comment in comments]
+        return make_response(jsonify({'comments': [comment for comment in comments]}), 200) if comments else jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter comentários"}), 500
-
-# Get By Type
-@app.route('/api/comments/<string:type>', methods=['GET'])
-def get_comments_by_type(type):
-    try:
-        comments = Comment.query.filter_by(type=type).all()
-        return jsonify({'comments': [comment.__dict__ for comment in comments]}) if comments else jsonify({'message': 'Comentários não encontrados'}), 404
-
-    except Exception as e:
-        return jsonify({"message": "Erro ao obter comentários"}), 500
+        return make_response(jsonify({"message": "Erro ao obter comentários"}), 500)
 
 # Update By Id
 @app.route('/api/comments/<int:comment_id>', methods=['PUT'])
@@ -377,11 +401,12 @@ def update_comment(comment_id):
             comment.date = data['date']
             db.session.commit()
 
-            return jsonify({'message': 'Comentário atualizado com sucesso', 'comment': comment.__dict__}), 200
-        return jsonify({'message': 'Comentário não encontrado'}), 404
+            comment = serialize_comment(comment)
+            return make_response(jsonify({'message': 'Comentário atualizado com sucesso', 'comment': comment}), 200)
+        return make_response(jsonify({'message': 'Comentário não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao atualizar o comentário'}), 500
+        return make_response(jsonify({'message': 'Erro ao atualizar o comentário'}), 500)
 
 # Delete By Id
 @app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
@@ -391,11 +416,11 @@ def delete_comment(comment_id):
         if comment:
             db.session.delete(comment)
             db.session.commit()
-            return jsonify({'message': 'Comentário deletado com sucesso'}), 200
-        return jsonify({'message': 'Comentário não encontrado'}), 404
+            return make_response(jsonify({'message': 'Comentário deletado com sucesso'}), 200)
+        return make_response(jsonify({'message': 'Comentário não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar o comentário'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar o comentário'}), 500)
 
 # Delete By User_id
 @app.route('/api/comments/user/<int:user_id>', methods=['DELETE'])
@@ -407,11 +432,11 @@ def delete_comment_by_user_id(user_id):
             for comment in comments:
                 db.session.delete(comment)
             db.session.commit()
-            return jsonify({'message': 'Comentários deletados com sucesso'}), 200
-        return jsonify({'message': 'Usuário não encontrado'}), 404
+            return make_response(jsonify({'message': 'Comentários deletados com sucesso'}), 200)
+        return make_response(jsonify({'message': 'Usuário não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar os comentários'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar os comentários'}), 500)
 
 # Delete By Type
 @app.route('/api/comments/type/<string:type>', methods=['DELETE'])
@@ -422,11 +447,12 @@ def delete_comment_by_type(type):
             for comment in comments:
                 db.session.delete(comment)
             db.session.commit()
-            return jsonify({'message': 'Comentários deletados com sucesso'}), 200
-        return jsonify({'message': 'Comentários não encontrados'}), 404
+            return make_response(jsonify({'message': 'Comentários deletados com sucesso'}), 200)
+        else:
+            return make_response(jsonify({'message': 'Comentários não encontrados'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar os comentários'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar os comentários'}), 500)
 
 # Delete By Type_Id
 @app.route('/api/comments/type/<string:type>/<int:type_id>', methods=['DELETE'])
@@ -437,11 +463,11 @@ def delete_comment_by_type_id(type, type_id):
             for comment in comments:
                 db.session.delete(comment)
             db.session.commit()
-            return jsonify({'message': 'Comentários deletados com sucesso'}), 200
-        return jsonify({'message': 'Comentários não encontrados'}), 404
+            return make_response(jsonify({'message': 'Comentários deletados com sucesso'}), 200)
+        return make_response(jsonify({'message': 'Comentários não encontrados'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar os comentários'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar os comentários'}), 500)
 
 # Events #
 
@@ -451,10 +477,10 @@ def get_events():
     try:
         events = Event.query.all()
         events_list = [serialize_event(event) for event in events]
-        return jsonify({'events': events_list})
+        return make_response(jsonify({'events': events_list}), 200)
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter eventos"}), 500
+        return make_response(jsonify({"message": "Erro ao obter eventos"}), 500)
 
 # Create
 @app.route('/api/events', methods=['POST'])
@@ -466,10 +492,11 @@ def add_event():
         db.session.commit()
 
         new_event = serialize_event(new_event)
-        return jsonify({'message': 'Evento adicionado com sucesso', 'event': new_event.__dict__}), 201
+        new_event = serialize_event(new_event)
+        return make_response(jsonify({'message': 'Evento adicionado com sucesso', 'event': new_event}), 201)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao adicionar evento'}), 500
+        return make_response(jsonify({'message': 'Erro ao adicionar evento'}), 500)
 
 # Get By Id
 @app.route('/api/events/<int:event_id>', methods=['GET'])
@@ -480,7 +507,7 @@ def get_event(event_id):
         event = serialize_event(event)
         return jsonify({'event': event})
     
-    return jsonify({'message': 'Evento não encontrado'}), 404
+    return make_response(jsonify({'message': 'Evento não encontrado'}), 404)
 
 # Get By Name
 @app.route('/api/events/name/<string:event_name>', methods=['GET'])
@@ -489,9 +516,9 @@ def get_event_by_name(event_name):
 
     if event:
         event = serialize_event(event)
-        return jsonify({'event': event})
+        return make_response(jsonify({'event': event}))
     
-    return jsonify({'message': 'Evento não encontrado'}), 404
+    return make_response(jsonify({'message': 'Evento não encontrado'}), 404)
 
 # Get By Date
 @app.route('/api/events/date/<string:date>', methods=['GET'])
@@ -500,9 +527,9 @@ def get_events_by_date(date):
 
     if events:
         events_list = [serialize_event(event) for event in events]
-        return jsonify({'events': events_list})
+        return make_response(jsonify({'events': events_list}), 200)
     
-    return jsonify({'message': 'Eventos não encontrados'}), 404
+    return make_response(jsonify({'message': 'Nenhum evento para essa data'}), 404)
 
 # Get By Local
 @app.route('/api/events/local/<string:local>', methods=['GET'])
@@ -511,9 +538,9 @@ def get_events_by_local(local):
 
     if events:
         events_list = [serialize_event(event) for event in events]
-        return jsonify({'events': events_list})
+        return make_response(jsonify({'events': events_list}), 200)
     
-    return jsonify({'message': 'Eventos não encontrados'}), 404
+    return make_response(jsonify({'message': 'Eventos não encontrados'}), 404)
 
 # Get By Date And Local
 @app.route('/api/events/<string:date>/<string:local>', methods=['GET'])
@@ -522,9 +549,9 @@ def get_events_by_date_and_local(date, local):
 
     if events:
         events_list = [serialize_event(event) for event in events]
-        return jsonify({'events': events_list})
+        return make_response(jsonify({'events': events_list}), 200)
     
-    return jsonify({'message': 'Eventos não encontrados'}), 404
+    return make_response(jsonify({'message': 'Eventos não encontrados'}), 404)
 
 # Update By Id
 @app.route('/api/events/<int:event_id>', methods=['PUT'])
@@ -541,12 +568,12 @@ def update_event(event_id):
             db.session.commit()
 
             event = serialize_event(event)
-            return jsonify({'message': 'Evento atualizado com sucesso', 'event': event})
+            return make_response(jsonify({'message': 'Evento atualizado com sucesso', 'event': event}), 200)
         
-        return jsonify({'message': 'Evento não encontrado'}), 404
+        return make_response(jsonify({'message': 'Evento não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao atualizar o evento'}), 500
+        return make_response(jsonify({'message': 'Erro ao atualizar o evento'}), 500)
 
 # Delete By Id
 @app.route('/api/events/<int:event_id>', methods=['DELETE'])
@@ -559,12 +586,12 @@ def delete_event(event_id):
             db.session.commit()
 
             event = serialize_event(event)
-            return jsonify({'message': 'Evento deletado com sucesso'})
+            return make_response(jsonify({'message': 'Evento deletado com sucesso'}), 200)
         
-        return jsonify({'message': 'Evento não encontrado'}), 404
+        return make_response(jsonify({'message': 'Evento não encontrado'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar o evento'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar o evento'}), 500)
 
 # Photos #
 
@@ -574,10 +601,10 @@ def get_photos():
     try:
         photos = Photo.query.all()
         photos_list = [photo.__dict__ for photo in photos]
-        return jsonify({'photos': photos_list})
+        return make_response(jsonify({'photos': photos_list}), 200)
 
     except Exception as e:
-        return jsonify({"message": "Erro ao obter fotos"}), 500
+        return make_response(jsonify({"message": "Erro ao obter fotos"}), 500)
 
 # Create
 @app.route('/api/photos', methods=['POST'])
@@ -588,10 +615,10 @@ def add_photo():
         db.session.add(new_photo)
         db.session.commit()
 
-        return jsonify({'message': 'Foto adicionada com sucesso', 'photo': new_photo.__dict__}), 201
+        return make_response(jsonify({'message': 'Foto adicionada com sucesso', 'photo': new_photo.__dict__}), 201)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao adicionar foto'}), 500
+        return make_response(jsonify({'message': 'Erro ao adicionar foto'}), 500)
     
 #Get By Id
 @app.route('/api/photos/<int:photo_id>', methods=['GET'])
@@ -599,9 +626,9 @@ def get_photo(photo_id):
     photo = Photo.query.get(photo_id)
 
     if photo:
-        return jsonify({'photo': photo.__dict__})
+        return make_response(jsonify({'photo': photo.__dict__}), 200)
     
-    return jsonify({'message': 'Foto não encontrada'}), 404
+    return make_response(jsonify({'message': 'Foto não encontrada'}), 404)
 
 # Get By Date
 @app.route('/api/photos/date/<string:date>', methods=['GET'])
@@ -610,9 +637,9 @@ def get_photos_by_date(date):
 
     if photos:
         photos_list = [photo.__dict__ for photo in photos]
-        return jsonify({'photos': photos_list})
+        return make_response(jsonify({'photos': photos_list}), 200)
     
-    return jsonify({'message': 'Fotos não encontradas'}), 404
+    return make_response(jsonify({'message': 'Fotos não encontradas'}), 404)
 
 # Update By Id
 @app.route('/api/photos/<int:photo_id>', methods=['PUT'])
@@ -627,12 +654,12 @@ def update_photo(photo_id):
             photo.date = data.get('date', photo.date)
             db.session.commit()
 
-            return jsonify({'message': 'Foto atualizada com sucesso', 'photo': photo.__dict__})
+            return make_response(jsonify({'message': 'Foto atualizada com sucesso', 'photo': photo.__dict__}), 200)
         
-        return jsonify({'message': 'Foto não encontrada'}), 404
+        return make_response(jsonify({'message': 'Foto não encontrada'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao atualizar a foto'}), 500
+        return make_response(jsonify({'message': 'Erro ao atualizar a foto'}), 500)
 
 # Delete By Id
 @app.route('/api/photos/<int:photo_id>', methods=['DELETE'])
@@ -644,12 +671,12 @@ def delete_photo(photo_id):
             db.session.delete(photo)
             db.session.commit()
 
-            return jsonify({'message': 'Foto deletada com sucesso'})
+            return make_response(jsonify({'message': 'Foto deletada com sucesso'}), 200)
         
-        return jsonify({'message': 'Foto não encontrada'}), 404
+        return make_response(jsonify({'message': 'Foto não encontrada'}), 404)
 
     except Exception as e:
-        return jsonify({'message': 'Erro ao deletar a foto'}), 500
+        return make_response(jsonify({'message': 'Erro ao deletar a foto'}), 500)
 
 
 if __name__ == '__main__':
