@@ -141,15 +141,24 @@ def login():
 
 # Movies #
 
+def serialize_event(event):
+    return {
+        'id': event.id,
+        'title': event.title,
+        'description': event.description,
+        'date': event.date.strftime('%d-%m-%Y'),  # Converte a data para string no formato desejado
+        'local': event.local
+    }
+
 def serialize_movie(movie):
     return {
         'id': movie.id,
+        'image_url': movie.image_url,
         'title': movie.title,
         'sinopse': movie.sinopse,
-        'date': movie.date,
-        'duration': str(movie.duration),
-        'classification': movie.classification,
-        'image_url': movie.image_url
+        'date': movie.date.strftime('%d-%m-%Y'),  # Converte a data para string no formato desejado
+        'duration': str(movie.duration),  # Converte a duração para string ou ajuste conforme necessário
+        'classification': movie.classification
     }
 
 # Index
@@ -164,7 +173,7 @@ def get_movies():
         return jsonify({'movies': serialized_movies})
 
     except Exception as e:
-        return jsonify({"message": f"Erro ao obter filmes {e}"}), 500
+        return jsonify({"message": "Erro ao obter filmes"}), 500
 
 # Create
 @app.route('/api/movies', methods=['POST'])
@@ -286,7 +295,7 @@ def get_comments():
         return jsonify({'comments': [comment.__dict__ for comment in comments]})
 
     except Exception as e:
-        return jsonify({"message": f"Erro ao obter comentários. Erro: {str(e)}"}), 500
+        return jsonify({"message": "Erro ao obter comentários"}), 500
 
 # Create
 @app.route('/api/comments', methods=['POST'])
@@ -306,7 +315,7 @@ def add_comment():
         return jsonify({'message': 'Comentário adicionado com sucesso', 'comment': new_comment.__dict__}), 201
 
     except Exception as e:
-        return jsonify({'message': f'Erro ao adicionar comentário. Erro: {str(e)}'}), 500
+        return jsonify({'message': 'Erro ao adicionar comentário'}), 500
 
 # Get By User_Id
 @app.route('/api/comments/<int:user_id>', methods=['GET'])
@@ -319,7 +328,7 @@ def get_comments_by_user_id(user_id):
         return jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({"message": f"Erro ao obter comentários. Erro: {str(e)}"}), 500
+        return jsonify({"message": "Erro ao obter comentários"}), 500
 
 # Get By User_Name
 @app.route('/api/comments/<string:user_name>', methods=['GET'])
@@ -332,7 +341,7 @@ def get_comments_by_user_name(user_name):
         return jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({"message": f"Erro ao obter comentários. Erro: {str(e)}"}), 500
+        return jsonify({"message": "Erro ao obter comentários"}), 500
 
 # Get By Type_Id
 @app.route('/api/comments/<string:type>/<int:type_id>', methods=['GET'])
@@ -342,7 +351,7 @@ def get_comments_by_type_id(type, type_id):
         return jsonify({'comments': [comment.__dict__ for comment in comments]}) if comments else jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({"message": f"Erro ao obter comentários. Erro: {str(e)}"}), 500
+        return jsonify({"message": "Erro ao obter comentários"}), 500
 
 # Get By Type
 @app.route('/api/comments/<string:type>', methods=['GET'])
@@ -352,7 +361,7 @@ def get_comments_by_type(type):
         return jsonify({'comments': [comment.__dict__ for comment in comments]}) if comments else jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({"message": f"Erro ao obter comentários. Erro: {str(e)}"}), 500
+        return jsonify({"message": "Erro ao obter comentários"}), 500
 
 # Update By Id
 @app.route('/api/comments/<int:comment_id>', methods=['PUT'])
@@ -372,7 +381,7 @@ def update_comment(comment_id):
         return jsonify({'message': 'Comentário não encontrado'}), 404
 
     except Exception as e:
-        return jsonify({'message': f'Erro ao atualizar o comentário. Erro: {str(e)}'}), 500
+        return jsonify({'message': 'Erro ao atualizar o comentário'}), 500
 
 # Delete By Id
 @app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
@@ -386,7 +395,7 @@ def delete_comment(comment_id):
         return jsonify({'message': 'Comentário não encontrado'}), 404
 
     except Exception as e:
-        return jsonify({'message': f'Erro ao deletar o comentário. Erro: {str(e)}'}), 500
+        return jsonify({'message': 'Erro ao deletar o comentário'}), 500
 
 # Delete By User_id
 @app.route('/api/comments/user/<int:user_id>', methods=['DELETE'])
@@ -402,7 +411,7 @@ def delete_comment_by_user_id(user_id):
         return jsonify({'message': 'Usuário não encontrado'}), 404
 
     except Exception as e:
-        return jsonify({'message': f'Erro ao deletar os comentários. Erro: {str(e)}'}), 500
+        return jsonify({'message': 'Erro ao deletar os comentários'}), 500
 
 # Delete By Type
 @app.route('/api/comments/type/<string:type>', methods=['DELETE'])
@@ -417,7 +426,7 @@ def delete_comment_by_type(type):
         return jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({'message': f'Erro ao deletar os comentários. Erro: {str(e)}'}), 500
+        return jsonify({'message': 'Erro ao deletar os comentários'}), 500
 
 # Delete By Type_Id
 @app.route('/api/comments/type/<string:type>/<int:type_id>', methods=['DELETE'])
@@ -432,7 +441,7 @@ def delete_comment_by_type_id(type, type_id):
         return jsonify({'message': 'Comentários não encontrados'}), 404
 
     except Exception as e:
-        return jsonify({'message': f'Erro ao deletar os comentários. Erro: {str(e)}'}), 500
+        return jsonify({'message': 'Erro ao deletar os comentários'}), 500
 
 # Events #
 
@@ -441,7 +450,7 @@ def delete_comment_by_type_id(type, type_id):
 def get_events():
     try:
         events = Event.query.all()
-        events_list = [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local} for event in events]
+        events_list = [serialize_event(event) for event in events]
         return jsonify({'events': events_list})
 
     except Exception as e:
@@ -456,7 +465,8 @@ def add_event():
         db.session.add(new_event)
         db.session.commit()
 
-        return jsonify({'message': 'Evento adicionado com sucesso', 'event': {'id': new_event.id, 'title': new_event.title, 'description': new_event.description, 'date': new_event.date, 'local': new_event.local}}), 201
+        new_event = serialize_event(new_event)
+        return jsonify({'message': 'Evento adicionado com sucesso', 'event': new_event.__dict__}), 201
 
     except Exception as e:
         return jsonify({'message': 'Erro ao adicionar evento'}), 500
@@ -467,7 +477,8 @@ def get_event(event_id):
     event = Event.query.get(event_id)
 
     if event:
-        return jsonify({'event': {'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local}})
+        event = serialize_event(event)
+        return jsonify({'event': event})
     
     return jsonify({'message': 'Evento não encontrado'}), 404
 
@@ -477,7 +488,8 @@ def get_event_by_name(event_name):
     event = Event.query.filter_by(title=event_name).first()
 
     if event:
-        return jsonify({'event': {'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local}})
+        event = serialize_event(event)
+        return jsonify({'event': event})
     
     return jsonify({'message': 'Evento não encontrado'}), 404
 
@@ -487,7 +499,7 @@ def get_events_by_date(date):
     events = Event.query.filter_by(date=date).all()
 
     if events:
-        events_list = [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local} for event in events]
+        events_list = [serialize_event(event) for event in events]
         return jsonify({'events': events_list})
     
     return jsonify({'message': 'Eventos não encontrados'}), 404
@@ -498,7 +510,7 @@ def get_events_by_local(local):
     events = Event.query.filter_by(local=local).all()
 
     if events:
-        events_list = [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local} for event in events]
+        events_list = [serialize_event(event) for event in events]
         return jsonify({'events': events_list})
     
     return jsonify({'message': 'Eventos não encontrados'}), 404
@@ -509,7 +521,7 @@ def get_events_by_date_and_local(date, local):
     events = Event.query.filter_by(date=date, local=local).all()
 
     if events:
-        events_list = [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local} for event in events]
+        events_list = [serialize_event(event) for event in events]
         return jsonify({'events': events_list})
     
     return jsonify({'message': 'Eventos não encontrados'}), 404
@@ -528,7 +540,8 @@ def update_event(event_id):
             event.local = data.get('local', event.local)
             db.session.commit()
 
-            return jsonify({'message': 'Evento atualizado com sucesso', 'event': {'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date, 'local': event.local}})
+            event = serialize_event(event)
+            return jsonify({'message': 'Evento atualizado com sucesso', 'event': event})
         
         return jsonify({'message': 'Evento não encontrado'}), 404
 
@@ -545,6 +558,7 @@ def delete_event(event_id):
             db.session.delete(event)
             db.session.commit()
 
+            event = serialize_event(event)
             return jsonify({'message': 'Evento deletado com sucesso'})
         
         return jsonify({'message': 'Evento não encontrado'}), 404
@@ -559,7 +573,7 @@ def delete_event(event_id):
 def get_photos():
     try:
         photos = Photo.query.all()
-        photos_list = [{'id': photo.id, 'image_url': photo.image_url, 'caption': photo.caption, 'date': photo.date} for photo in photos]
+        photos_list = [photo.__dict__ for photo in photos]
         return jsonify({'photos': photos_list})
 
     except Exception as e:
@@ -574,7 +588,7 @@ def add_photo():
         db.session.add(new_photo)
         db.session.commit()
 
-        return jsonify({'message': 'Foto adicionada com sucesso', 'photo': {'id': new_photo.id, 'image_url': new_photo.image_url, 'caption': new_photo.caption, 'date': new_photo.date}}), 201
+        return jsonify({'message': 'Foto adicionada com sucesso', 'photo': new_photo.__dict__}), 201
 
     except Exception as e:
         return jsonify({'message': 'Erro ao adicionar foto'}), 500
@@ -585,9 +599,9 @@ def get_photo(photo_id):
     photo = Photo.query.get(photo_id)
 
     if photo:
-        return jsonify({'photo': {'id': photo.id, 'image_url': photo.image_url, 'caption': photo.caption, 'date': photo.date}})
+        return jsonify({'photo': photo.__dict__})
     
-    return jsonify({'message': 'Foto não encontrado'}), 404
+    return jsonify({'message': 'Foto não encontrada'}), 404
 
 # Get By Date
 @app.route('/api/photos/date/<string:date>', methods=['GET'])
@@ -595,7 +609,7 @@ def get_photos_by_date(date):
     photos = Photo.query.filter_by(date=date).all()
 
     if photos:
-        photos_list = [{'id': photo.id, 'image_url': photo.image_url, 'caption': photo.caption, 'date': photo.date} for photo in photos]
+        photos_list = [photo.__dict__ for photo in photos]
         return jsonify({'photos': photos_list})
     
     return jsonify({'message': 'Fotos não encontradas'}), 404
@@ -613,7 +627,7 @@ def update_photo(photo_id):
             photo.date = data.get('date', photo.date)
             db.session.commit()
 
-            return jsonify({'message': 'Foto atualizada com sucesso', 'photo': {'id': photo.id, 'image_url': photo.image_url, 'caption': photo.caption, 'date': photo.date}})
+            return jsonify({'message': 'Foto atualizada com sucesso', 'photo': photo.__dict__})
         
         return jsonify({'message': 'Foto não encontrada'}), 404
 
