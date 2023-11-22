@@ -5,3 +5,4 @@ pip install flask
 pip install Flask-CORS
 pip install flask_sqlalchemy
 pip install bcrypt
+python ./resources/Crud.py
